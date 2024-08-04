@@ -15,6 +15,7 @@ services:
       - WORK_GROUP=-1002093359704
       - TIMEOUT=15d
       - INTERVAL=5m
+      - TZ=Asia/Shanghai
     volumes:
       - ./db:/app/db
     restart: always
