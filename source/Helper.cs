@@ -65,12 +65,12 @@ namespace DeleteInactiveMembers
             var b = Hosting.GetRequiredService<Listener>().BotClient;
             return await FastReply(b, message, text);
         }
-        public static void DeleteLater(this Message message, int second = 15)
+        public static void DeleteLater(this Message message, int second = 60)
         {
             var b = Hosting.GetRequiredService<Listener>().BotClient;
             DeleteLater(b,message, second);
         }
-        public static void DeleteLater(this TelegramBotClient b, Message message, int second = 15)
+        public static void DeleteLater(this TelegramBotClient b, Message message, int second = 60)
         {
             _ = Task.Run( async()=>
             {

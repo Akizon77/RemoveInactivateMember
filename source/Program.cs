@@ -1,9 +1,10 @@
 ﻿using DeleteInactiveMembers;
 using DeleteInactiveMembers.Repo;
+using System.Diagnostics;
 using Telegram.Bot;
 
+Stopwatch stopwatch = Stopwatch.StartNew();
 
-using var __defer = new Defer(() => { Log.Information("Good bye~"); });
 if (Env.DEBUG)
     Log.Logger = new LoggerConfiguration().WriteTo.Console().Enrich.FromLogContext()
         .MinimumLevel.Debug().CreateLogger();
@@ -14,20 +15,27 @@ AppDomain.CurrentDomain.UnhandledException += (_, e) =>
     Log.Fatal((Exception)e.ExceptionObject, "Global Unhandled Exception occurred.");
 
 Hosting.Register(s => s.AddSerilog());
+Log.Information("Connecting DB. ({second:0.00}s)!", stopwatch.Elapsed.TotalSeconds);
 Hosting.Register(new Database().DbClient);
 Hosting.Register<Listener>(); 
 Hosting.Register<Command>();
 Hosting.Register<Member>();
 Hosting.Register<Deleted>();
 Hosting.Build();
-var l = Hosting.GetRequiredService<Listener>();
-Hosting.GetRequiredService<Command>();
-_ = l.SetMyCommandsAsync();
 
+Log.Information("Initializing database. ({second:0.00}s)!", stopwatch.Elapsed.TotalSeconds);
 var membersDb = Hosting.GetRequiredService<Member>();
 var deletedMembersDb = Hosting.GetRequiredService<Deleted>();
 membersDb.InitHeader();
 deletedMembersDb.InitHeader();
+
+Log.Information("Start Listener. ({second:0.00}s)!", stopwatch.Elapsed.TotalSeconds);
+var l = Hosting.GetRequiredService<Listener>();
+Hosting.GetRequiredService<Command>();
+await l.SetMyCommandsAsync();
+
+stopwatch.Stop();
+Log.Information("All done ({second:0.00}s)!",stopwatch.Elapsed.TotalSeconds);
 
 //membersDb.Storageable(new DeleteInactiveMembers.Tables.Member() { Id = 6490522426 ,Name = "ＫＹＯＫＯ", LastActiveTime = DateTime.Parse("2024/07/04 15:27:16")}).ExecuteCommand();
 
@@ -35,8 +43,9 @@ await UnBan();
 while (true)
 {
     Thread.Sleep(Env.INTERVAL);
-    l.Admins = l.BotClient.GetChatAdministratorsAsync(Env.WORK_GROUP).Result.Select(x => x.User.Id).ToList();
+    stopwatch = Stopwatch.StartNew();
     Log.Debug("开始检查不活跃用户");
+    l.Admins = l.BotClient.GetChatAdministratorsAsync(Env.WORK_GROUP).Result.Select(x => x.User.Id).ToList();
     var deadline = DateTime.UtcNow - Env.TIMEOUT;
     try
     {
@@ -47,13 +56,15 @@ while (true)
             if (!l.Admins.Contains(x.Id))
                 await Ban(x);
         });
-        Log.Information("删除了 {0} 位不活跃用户", inactiveMembers.Count);
+        stopwatch.Stop();
+        Log.Information("删除了 {0} 位不活跃用户。 ({s:0.00}s)", inactiveMembers.Count, stopwatch.Elapsed.TotalSeconds);
         deletedMembersDb.Storageable(inactiveMembers.Select(x => new DeleteInactiveMembers.Tables.Deleted() { Id = x.Id, Name = x.Name, LastActiveTime = x.LastActiveTime }).ToList()).ExecuteCommand();
     }
     catch (Exception e)
     {
         Log.Error(e, "删除用户时出错");
     }
+
 }
 
 async Task Ban(DeleteInactiveMembers.Tables.Member member)
@@ -72,6 +83,7 @@ async Task Ban(DeleteInactiveMembers.Tables.Member member)
         aTimer.Elapsed += (_, _) =>
         {
             _ = UnBan();
+            m1.DeleteLater(1);
         };
         aTimer.AutoReset = false;
         // 启动计时器

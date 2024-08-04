@@ -47,7 +47,6 @@ namespace DeleteInactiveMembers.Modules
             }
 
             DbClient.Open();
-            Log.Information("成功连接到数据库");
         }
     }
 }

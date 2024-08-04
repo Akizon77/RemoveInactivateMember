@@ -21,7 +21,7 @@ namespace DeleteInactiveMembers.Modules
             HttpClient httpClient;
             if (Env.USE_PROXY)
             {
-                Log.Information("使用 {proxy} 代理服务器登录Telegram...", Env.PROXY);
+                Log.Information("Use {proxy} proxy server to log in to Telegram...", Env.PROXY);
                 WebProxy webProxy = new WebProxy(Env.PROXY, true);
                 HttpClientHandler httpClientHandler = new HttpClientHandler();
                 httpClientHandler.Proxy = webProxy;
@@ -30,7 +30,7 @@ namespace DeleteInactiveMembers.Modules
             }
             else
             {
-                Log.Information("登录Telegram...");
+                Log.Information("Logging in to Telegram...");
                 httpClient = new();
             }
             BotClient = new TelegramBotClient(Env.TG_TOKEN, httpClient);
@@ -41,13 +41,12 @@ namespace DeleteInactiveMembers.Modules
                 using var __defer = new Defer(() => { });
                 await OnUpdate(c, u, t);
             }, OnError);
-            Log.Information("成功作为 {fullname}(@{username}) 登录", Me.GetFullName(), Me.Username);
-            
+            Log.Information("Successfully logged in as {fullname}(@{username}) ", Me.GetFullName(), Me.Username);
         }
 
         private Task OnError(ITelegramBotClient client, Exception exception, CancellationToken token)
         {
-            Log.Error(exception, "与 Telegram 服务器通信时发生错误");
+            Log.Warning($"与 Telegram 通信时发生意外: {exception.Message}. {exception.InnerException?.Message}");
             return Task.CompletedTask;
         }
 
@@ -70,6 +69,7 @@ namespace DeleteInactiveMembers.Modules
                 //处理纯文字消息
                 if (message.Text != null && message.Text.Length > 0)
                 {
+                    Log.Information("{name}({id}): {text}",user.GetFullName(),user.Id,message.Text);
                     if (message.Text.StartsWith('/'))
                     {
                         string[] parts = message.Text[1..].Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
@@ -80,10 +80,17 @@ namespace DeleteInactiveMembers.Modules
                     }
                 }
             }
+            catch (NotSupportedException ex)
+            {
+                message.DeleteLater();
+                var tx = await message.FastReply($"{ex.Message}");
+                tx.DeleteLater();
+            }
             catch (Exception ex)
             {
-                Log.Warning(ex, "{name}({id}): {message}",user.GetFullName(),user.Id,message.Text);
-                var tx = await BotClient.SendTextMessageAsync(chatID, $"被玩坏了 {ex.GetType().Name}: {ex.Message}");
+                message.DeleteLater();
+                Log.Warning(ex, "{name}({id}): {message}", user.GetFullName(), user.Id, message.Text);
+                var tx = await message.FastReply($"被玩坏了 {ex.GetType().Name}: {ex.Message}");
                 tx.DeleteLater();
             }
         }
@@ -101,12 +108,12 @@ namespace DeleteInactiveMembers.Modules
         }
 
         private List<BotCommand> botCommands = new();
-        Dictionary<string, bool> allowedPrivateCommand = new();
+        private Dictionary<string, bool> allowedPrivateCommand = new();
 
-        public void RegisterCommand(string command, Func<Message, string, string[], Task> func, string? desc = null,bool allowPrivateChat = true)
+        public void RegisterCommand(string command, Func<Message, string, string[], Task> func, string? desc = null, bool allowPrivateChat = true)
         {
-            Log.Information("正在注册指令 {c} - {desc}", command, desc ?? "No Description");
-            if (allowPrivateChat) allowedPrivateCommand[command] = true;
+            Log.Information("Registering command {c} - {desc}", command, desc ?? "No Description");
+            if (allowPrivateChat) allowedPrivateCommand[command] = allowPrivateChat;
             commandsFunction.Add(command, func);
             if (desc != null)
                 botCommands.Add(new()
