@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: delete_member
+    environment:
+      - DEBUG=true
+      - TG_TOKEN=
+      - DB_TYPE=sqlite
+      - DB_FILE=./db/members.db
+      - USE_PROXY=false
+      - WORK_GROUP=-1002093359704
+      - TIMEOUT=15d
+      - INTERVAL=5m
+    volumes:
+      - ./db:/app/db
+    restart: always

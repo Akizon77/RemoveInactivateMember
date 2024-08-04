@@ -1,0 +1,12 @@
+﻿global using Serilog;
+global using Newtonsoft.Json.Linq;
+global using System.Linq;
+global using System.Net.Http;
+global using System;
+global using Newtonsoft.Json;
+global using System.Threading.Tasks;
+global using System.Threading;
+global using System.Collections.Generic;
+global using System.IO;
+global using Mamo233Lib;
+global using DeleteInactiveMembers.Modules;
