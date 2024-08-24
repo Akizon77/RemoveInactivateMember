@@ -10,7 +10,7 @@ services:
       - DEBUG=true
       - TG_TOKEN=
       - DB_TYPE=sqlite
-      - DB_FILE=./db/members.db
+      - DB_FILE=./members.db
       - USE_PROXY=false
       - WORK_GROUP=-1002093359704
       - TIMEOUT=15d

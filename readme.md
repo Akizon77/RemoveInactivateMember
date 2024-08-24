@@ -2,21 +2,11 @@
 
 ## 运行 Running
 
-拉取仓库 Pull the repository:
-
-```shell
-git clone https://github.com/Akizon77/RemoveInactivateMember
-cd RemoveInactivateMember
-```
-
-使用 docker-compose 运行 Run with docker-compose
+使用 docker 运行 Run with docker
 
 
 ```shell
-# 在前台运行 Run in the foreground
-docker-compose up
-# 在后台运行 Run in the background
-docker-compose up -d
+docker run -e "TG_TOKEN=123:xxx" -e "WORK_GROUP=-123456" akizon77/removeinactivatemember:latest
 ```
 
 

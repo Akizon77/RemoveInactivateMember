@@ -34,7 +34,15 @@ namespace DeleteInactiveMembers.Modules
                 httpClient = new();
             }
             BotClient = new TelegramBotClient(Env.TG_TOKEN, httpClient);
-            Me = BotClient.GetMeAsync().Result;
+            try
+            {
+                Me = BotClient.GetMeAsync().Result;
+            }
+            catch (Exception e)
+            {
+                Log.Fatal(e, "登陆失败");
+            }
+            
             Admins = BotClient.GetChatAdministratorsAsync(Env.WORK_GROUP).Result.Select(x => x.User.Id).ToList();
             BotClient.StartReceiving(async (c, u, t) =>
             {
@@ -125,8 +133,17 @@ namespace DeleteInactiveMembers.Modules
 
         public async Task SetMyCommandsAsync()
         {
-            await BotClient.SetMyCommandsAsync(botCommands, new BotCommandScopeChat() { ChatId = Env.WORK_GROUP });
-            await BotClient.SetMyCommandsAsync(botCommands, new BotCommandScopeAllPrivateChats());
+            try
+            {
+                await BotClient.SetMyCommandsAsync(botCommands, new BotCommandScopeChat() { ChatId = Env.WORK_GROUP });
+                await BotClient.SetMyCommandsAsync(botCommands, new BotCommandScopeAllPrivateChats());
+            }
+            catch (Exception)
+            {
+                Log.Warning("Unable to register commands.");
+            }
+                
+            
         }
     }
 }

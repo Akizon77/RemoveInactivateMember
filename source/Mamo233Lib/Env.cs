@@ -10,24 +10,28 @@ namespace Mamo233Lib
     public static class Env
     {
         private static Dictionary<string, string> Envs = new Dictionary<string, string>();
-        public static bool DEBUG => bool.Parse(Envs["DEBUG"]);
-        public static string TG_TOKEN => Envs["TG_TOKEN"];
-        public static long WORK_GROUP => long.Parse(Envs["WORK_GROUP"]);
-        public static string PROXY => Envs["PROXY"];
-        public static bool USE_PROXY => bool.Parse(Envs["USE_PROXY"]);
-        public static TimeSpan TIMEOUT => TimeStamp.ParseDuration(Envs["TIMEOUT"]);
-        public static TimeSpan INTERVAL => TimeStamp.ParseDuration(Envs["INTERVAL"]);
-        public static string DB_TYPE => Envs["DB_TYPE"];
-        public static string DB_FILE => Envs["DB_FILE"];
-        public static string DB_CONNECTION_STRING => Envs["DB_CONNECTION_STRING"];
+        public static bool DEBUG => bool.Parse(Get("DEBUG","false"));
+        public static string TG_TOKEN => Get("TG_TOKEN");
+        public static long WORK_GROUP => long.Parse(Get("WORK_GROUP","0"));
+        public static string PROXY => Get("PROXY","");
+        public static bool USE_PROXY => bool.Parse(Get("USE_PROXY", "false"));
+        public static TimeSpan TIMEOUT => TimeStamp.ParseDuration(Get("TIMEOUT", "15d"));
+        public static TimeSpan INTERVAL => TimeStamp.ParseDuration(Get("INTERVAL", "15m"));
+        public static string DB_TYPE => Get("DB_TYPE", "sqlite");
+        public static string DB_FILE => Get("DB_FILE", "./members.db");
+        public static string DB_CONNECTION_STRING => Get("DB_CONNECTION_STRING");
         static Env()
         {
             LoadEnvironmentVariables(Envs);
             LoadEnvFileVariables(Envs, ".env");
         }
-        public static string Get(string key)
+        public static string Get(string key,string defaul = "")
         {
-            return Envs[key];
+            if (Envs.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+            return defaul;
         }
 
         private static void LoadEnvironmentVariables(Dictionary<string, string> configVariables)

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -29,7 +24,11 @@ namespace DeleteInactiveMembers.Modules
         {
             message.DeleteLater(15);
             (await BotClient.SendTextMessageAsync(message.Chat.Id,
-                "移除不活跃的群成员 By @AkizonChan",
+                "移除不活跃的群成员 By @AkizonChan\n" +
+                $"当前工作群组: <code>{Env.WORK_GROUP}</code>\n" +
+                $"当前设置的不活跃时间: <code>{Env.Get("TIMEOUT","15d")}</code>\n" +
+                $"------\n" +
+                $"数据库类型: <code>{Env.DB_TYPE}</code>",
                 replyMarkup:new InlineKeyboardMarkup(new InlineKeyboardButton("Github") { Url = "https://github.com/Akizon77/RemoveInactivateMember" }) ,
                 parseMode:ParseMode.Html,
                 disableWebPagePreview:true))
